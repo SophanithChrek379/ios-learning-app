@@ -8,6 +8,8 @@ enum APIEndPoint {
     case todo(id: Int)
     case add
     case update(id: String)
+    case delete(id: String)
+    case toggleTask(id: String)
 
     var path: String {
         switch self {
@@ -19,6 +21,10 @@ enum APIEndPoint {
             return "/todos"
         case .update(let id):
             return "/todos/\(id)"
+        case .delete(let id):
+            return "/todos/\(id)"
+        case .toggleTask(let id):
+            return "/todos/\(id)/completed"
         }
     }
     

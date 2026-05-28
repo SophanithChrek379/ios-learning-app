@@ -175,4 +175,23 @@ extension TaskListViewController: UITableViewDelegate {
             }
         }
     }
+    
+    func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let done = UIContextualAction(style: .normal, title: "Done") { action, view, value in
+                print("Done clicked")
+        }
+        
+        done.image = UIImage(systemName: "pencil")
+        
+        return UISwipeActionsConfiguration(actions: [done])
+    }
+    
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let delete = UIContextualAction(style: .destructive, title: "Delete") { action, view, value in
+            print("Delete clicked")
+        }
+        delete.image = UIImage(systemName: "trash")
+        
+        return UISwipeActionsConfiguration(actions: [delete])
+    }
 }
