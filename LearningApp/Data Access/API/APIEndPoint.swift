@@ -5,7 +5,7 @@ enum APIEndPoint {
     static let baseURL = "https://todoist-api-repo.onrender.com"
     
     case todos(page: Int, limit: Int)
-    case todo(id: Int)
+    case todo(id: String)
     case add
     case update(id: String)
     case delete(id: String)

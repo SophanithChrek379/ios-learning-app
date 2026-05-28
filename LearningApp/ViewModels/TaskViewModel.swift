@@ -68,7 +68,7 @@ final class TaskViewModel {
         }
     }
     
-    func loadTask(id: Int) async {
+    func loadTask(id: String) async {
         isLoading = true
         onUpdate?()
         

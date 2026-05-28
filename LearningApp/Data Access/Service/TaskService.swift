@@ -7,30 +7,38 @@ final class TaskService {
     private init() {}
     
     func fetchTasks(page: Int, limit: Int) async throws -> TaskResponse {
-        let response: TaskResponse = try await APIClient.shared.fetch(
-            from: .todos(page: page, limit: limit)
+        let response: TaskResponse = try await APIClient.shared.request(
+            .todos(page: page, limit: limit)
         )
         return response
     }
     
-    func fetchTask(id: Int) async throws -> TaskItem {
-        let task: TaskItem = try await APIClient.shared.fetch(from: .todo(id: id))
+    func fetchTask(id: String) async throws -> TaskItem {
+        let task: TaskItem = try await APIClient.shared.request(.todo(id: id))
         return task
     }
     
     func addTask(title: String) async throws -> TaskItem {
         let body = AddTaskRequest(title: title, isCompleted: false)
-        return try await APIClient.shared.post(
-            to: .add,
+        return try await APIClient.shared.request(
+            .add,
+            method: .post,
             body: body
         )
     }
     
     func updateTask(_ task: TaskItem) async throws -> TaskItem {
         let body = EditTaskRequest(title: task.title, isCompleted: task.isCompleted)
-        return try await APIClient.shared.put(
-            to: .update(id: task.id), body: body
+        return try await APIClient.shared.request(
+            .update(id: task.id),
+            method: .put,
+            body: body
         )
     }
     
+//    func toggleTask(_ task: TaskItem) async throws -> TaskItem {
+//        let body = ToggleTaskRequest(isCompleted: task.isCompleted)
+//
+//    }
+
 }

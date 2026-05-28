@@ -70,6 +70,7 @@ class EditTaskViewController: UIViewController {
 
         view.backgroundColor = .secondarySystemBackground
         title = "Edit Task"
+        navigationController?.navigationBar.prefersLargeTitles = false
 
         setupNavBar()
         setupLayout()
