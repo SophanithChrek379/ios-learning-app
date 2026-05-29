@@ -14,18 +14,31 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let window = UIWindow(windowScene: windowScene)
         self.window = window
 
-        /// If we already have a saved token, jump to the task list.
-        /// Otherwise, show the Login screen first.
-        if TokenStore.shared.isLoggedIn {
-            window.rootViewController = makeTaskList()
-        } else {
-            window.rootViewController = makeLogin()
-        }
-
+        /// Always start at the Splash screen. When its progress bar
+        /// finishes, it tells us — and *then* we route to Login or TaskList.
+        window.rootViewController = makeSplash()
         window.makeKeyAndVisible()
     }
 
     // MARK: - Building screens
+
+    /// The branded splash. When it's done, we decide where to go next.
+    private func makeSplash() -> UIViewController {
+        let splashVC = SplashViewController()
+        splashVC.onFinish = { [weak self] in
+            self?.routeAfterSplash()
+        }
+        return splashVC
+    }
+
+    /// Picks the next screen based on whether the user is already logged in.
+    private func routeAfterSplash() {
+        if TokenStore.shared.isLoggedIn {
+            switchToTaskList()
+        } else {
+            switchToLogin()
+        }
+    }
 
     /// The Login screen wrapped in a navigation controller so it can push to Register.
     private func makeLogin() -> UIViewController {
@@ -51,6 +64,18 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.rootViewController = makeTaskList()
 
         /// A small fade looks nicer than a hard cut.
+        UIView.transition(with: window,
+                          duration: 0.25,
+                          options: .transitionCrossDissolve,
+                          animations: nil)
+    }
+
+    /// Swap the root window back to the Login screen (used after logout).
+    /// Marked `internal` (the default) so the Profile screen can call it.
+    func switchToLogin() {
+        guard let window = window else { return }
+        window.rootViewController = makeLogin()
+
         UIView.transition(with: window,
                           duration: 0.25,
                           options: .transitionCrossDissolve,

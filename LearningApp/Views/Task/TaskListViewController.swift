@@ -3,31 +3,28 @@ import UIKit
 class TaskListViewController: UIViewController {
 
     @IBOutlet weak var tableViewOutlet: UITableView!
-    
+
     private let viewModel = TaskViewModel()
 
     private let refreshControl = UIRefreshControl()
 
-    private var isShowingInitialSkeleton: Bool {
-        viewModel.isLoading && viewModel.numberOfTasks() == 0 && !refreshControl.isRefreshing
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         setupView()
         setupTableView()
         bindViewModel()
         loadData()
     }
-    
+
     private func setupView() {
         view.backgroundColor = .systemBackground
         title = "Tasks"
         navigationController?.navigationBar.prefersLargeTitles = true
+        setupAvatarBarButton()
         view.addSubview(fabButton)
         fabButton.addTarget(self, action: #selector(didTapFAB), for: .touchUpInside)
-        
+
         NSLayoutConstraint.activate([
             fabButton.widthAnchor.constraint(equalToConstant: 56),
             fabButton.heightAnchor.constraint(equalToConstant: 56),
@@ -35,25 +32,47 @@ class TaskListViewController: UIViewController {
             fabButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24),
         ])
     }
-    
+
+    /// Adds a small circular "Avatar" button to the right side of the
+    /// navigation bar. Tapping it opens the Profile screen.
+    private func setupAvatarBarButton() {
+        /// A round person icon as the default avatar (no photo yet).
+        let config = UIImage.SymbolConfiguration(pointSize: 28, weight: .regular)
+        let avatarImage = UIImage(systemName: "person.crop.circle.fill",
+                                  withConfiguration: config)
+
+        let avatarButton = UIButton(type: .system)
+        avatarButton.setImage(avatarImage, for: .normal)
+        avatarButton.tintColor = .systemBlue
+        avatarButton.frame = CGRect(x: 0, y: 0, width: 32, height: 32)
+        avatarButton.addTarget(self, action: #selector(didTapAvatar), for: .touchUpInside)
+
+        let barButton = UIBarButtonItem(customView: avatarButton)
+        navigationItem.rightBarButtonItem = barButton
+    }
+
+    @objc private func didTapAvatar() {
+        let profileVC = ProfileViewController()
+        navigationController?.pushViewController(profileVC, animated: true)
+    }
+
     private func setupTableView() {
         tableViewOutlet.delegate = self
         tableViewOutlet.dataSource = self
         tableViewOutlet.refreshControl = refreshControl
         tableViewOutlet.register(UITableViewCell.self, forCellReuseIdentifier: "TaskCell")
-        tableViewOutlet.register(TaskSkeletonCell.self, forCellReuseIdentifier: TaskSkeletonCell.reuseIdentifier)
-        tableViewOutlet.contentInset.top = 24 // = UIEdgeInsets(top: 24, left: 0, bottom: 0, right: 0)
+        tableViewOutlet.contentInset.top = 24
         tableViewOutlet.contentInset.bottom = 60
-        
+
         refreshControl.addTarget(self, action: #selector(refreshTasks), for: .valueChanged)
     }
-    
+
     private func loadData() {
         Task {
             await viewModel.loadTasks()
         }
     }
-    
+
     // MARK: - Bindings
     private func bindViewModel() {
         viewModel.onUpdate = { [weak self] in
@@ -62,7 +81,7 @@ class TaskListViewController: UIViewController {
             }
         }
     }
-    
+
     @MainActor
     private func updateUI() {
         if !viewModel.isLoading {
@@ -73,16 +92,15 @@ class TaskListViewController: UIViewController {
             print("Error:", error)
         }
 
-        tableViewOutlet.isUserInteractionEnabled = !isShowingInitialSkeleton
         tableViewOutlet.reloadData()
     }
-    
+
     @objc private func refreshTasks() {
         Task {
             await viewModel.loadTasks()
         }
     }
-    
+
     private let fabButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -96,10 +114,10 @@ class TaskListViewController: UIViewController {
         button.layer.shadowRadius = 8
         return button
     }()
-    
+
     @objc
     private func didTapFAB() {
-        
+
         let addVC = AddTaskViewController()
         addVC.modalPresentationStyle = .pageSheet
         addVC.onTaskAdded = { [weak self] taskTitle in
@@ -114,22 +132,10 @@ class TaskListViewController: UIViewController {
 
 extension TaskListViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if isShowingInitialSkeleton {
-            return 8
-        }
-
         return viewModel.numberOfTasks()
     }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if isShowingInitialSkeleton {
-            let cell = tableView.dequeueReusableCell(
-                withIdentifier: TaskSkeletonCell.reuseIdentifier,
-                for: indexPath
-            ) as! TaskSkeletonCell
-            return cell
-        }
 
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath)
 
         let task = viewModel.task(at: indexPath.row)
@@ -157,8 +163,6 @@ extension TaskListViewController: UITableViewDataSource {
 
 extension TaskListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard !isShowingInitialSkeleton else { return }
-
         tableView.deselectRow(at: indexPath, animated: true)
 
         // 1. Get the task the user tapped
@@ -176,8 +180,6 @@ extension TaskListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView,
                    willDisplay cell: UITableViewCell,
                    forRowAt indexPath: IndexPath) {
-        guard !isShowingInitialSkeleton else { return }
-
         let lastRow = viewModel.numberOfTasks() - 1
         if indexPath.row == lastRow {
             Task {
@@ -185,15 +187,14 @@ extension TaskListViewController: UITableViewDelegate {
             }
         }
     }
-    
+
     func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        guard !isShowingInitialSkeleton else { return nil }
         let task = viewModel.task(at: indexPath.row)
 
         let done = UIContextualAction(style: .normal, title: "Done") { action, view, value in
                 print("Done clicked")
         }
-        
+
         let undo = UIContextualAction(style: .normal, title: "Undo") { action, view, value in
                 print("Undo clicked")
         }
@@ -203,104 +204,16 @@ extension TaskListViewController: UITableViewDelegate {
 
         done.image = UIImage(systemName: "checkmark.circle.fill")
         done.backgroundColor = .systemGreen
-        
+
         return UISwipeActionsConfiguration(actions: [task.isCompleted ? undo : done])
     }
-    
-    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        guard !isShowingInitialSkeleton else { return nil }
 
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let delete = UIContextualAction(style: .destructive, title: "Delete") { action, view, value in
             print("Delete clicked")
         }
         delete.image = UIImage(systemName: "trash")
-        
+
         return UISwipeActionsConfiguration(actions: [delete])
-    }
-}
-
-private final class TaskSkeletonCell: UITableViewCell {
-    static let reuseIdentifier = "TaskSkeletonCell"
-
-    private let titleLine = TaskSkeletonCell.makeSkeletonView(width: 220)
-    private let subtitleLine = TaskSkeletonCell.makeSkeletonView(width: 140)
-
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setupView()
-    }
-
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        setupView()
-    }
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        contentView.subviews.forEach { view in
-            view.layer.sublayers?.forEach { layer in
-                layer.frame = view.bounds
-            }
-        }
-    }
-
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        startAnimating()
-    }
-
-    private func setupView() {
-        selectionStyle = .none
-        isUserInteractionEnabled = false
-        backgroundColor = .systemBackground
-
-        let stackView = UIStackView(arrangedSubviews: [titleLine, subtitleLine])
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.axis = .vertical
-        stackView.alignment = .leading
-        stackView.spacing = 10
-
-        contentView.addSubview(stackView)
-
-        NSLayoutConstraint.activate([
-            stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            stackView.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -20),
-            stackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 14),
-            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -14),
-            contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: 72)
-        ])
-
-        startAnimating()
-    }
-
-    private func startAnimating() {
-        [titleLine, subtitleLine].forEach { view in
-            view.layer.removeAllAnimations()
-
-            let animation = CABasicAnimation(keyPath: "opacity")
-            animation.fromValue = 0.45
-            animation.toValue = 1.0
-            animation.duration = 0.8
-            animation.autoreverses = true
-            animation.repeatCount = .infinity
-            animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-
-            view.layer.add(animation, forKey: "taskSkeletonPulse")
-        }
-    }
-
-    private static func makeSkeletonView(width: CGFloat) -> UIView {
-        let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .systemGray5
-        view.layer.cornerRadius = 6
-        view.layer.masksToBounds = true
-
-        NSLayoutConstraint.activate([
-            view.widthAnchor.constraint(equalToConstant: width),
-            view.heightAnchor.constraint(equalToConstant: 14)
-        ])
-
-        return view
     }
 }

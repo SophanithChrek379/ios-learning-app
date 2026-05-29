@@ -13,7 +13,7 @@ enum APIError: Error, LocalizedError {
         case .invalidURL:
             return "The URL is not valid. Please check the address."
         case .invalidResponse:
-            return "The server returned an unexpected response."
+            return "sop"
         case .decodingFailed:
             return "We couldn't read the data from the server."
         case .encodingFailed:
