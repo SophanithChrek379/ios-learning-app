@@ -35,6 +35,12 @@ final class APIClient {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
 
+        /// If we already have a login token, send it with every request.
+        /// The server reads this header to know who we are.
+        if let token = TokenStore.shared.token {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
         if let body {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 

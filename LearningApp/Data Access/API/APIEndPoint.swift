@@ -4,6 +4,12 @@ enum APIEndPoint {
     
     static let baseURL = "https://todoist-api-repo.onrender.com"
     
+    // Auth
+    case register
+    case login
+    case me
+
+    // Todos
     case todos(page: Int, limit: Int)
     case todo(id: String)
     case add
@@ -13,6 +19,12 @@ enum APIEndPoint {
 
     var path: String {
         switch self {
+        case .register:
+            return "/auth/register"
+        case .login:
+            return "/auth/login"
+        case .me:
+            return "/auth/me"
         case .todos(let page, let limit):
             return "/todos?page=\(page)&limit=\(limit)"
         case .todo(let id):
