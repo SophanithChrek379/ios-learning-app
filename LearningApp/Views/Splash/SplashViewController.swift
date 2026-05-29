@@ -23,26 +23,30 @@ class SplashViewController: UIViewController {
     /// The warm pink-to-cream wash behind everything.
     private let gradientLayer = CAGradientLayer()
 
-    /// Red rounded square that holds the app icon.
-    private let iconContainer: UIView = {
-        let view = UIView()
-        view.backgroundColor = Tokens.primary
-        view.layer.cornerRadius = 24 // rounded-xl from DESIGN.md
-        view.layer.shadowColor = UIColor.black.cgColor
-        view.layer.shadowOpacity = 0.1
-        view.layer.shadowOffset = CGSize(width: 0, height: 4)
-        view.layer.shadowRadius = 12
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
+    // /// Red rounded square that held the app icon.
+    // /// Kept here for reference — replaced by the `TodoAppIcon` asset below.
+    // private let iconContainer: UIView = {
+    //     let view = UIView()
+    //     view.backgroundColor = Tokens.primary
+    //     view.layer.cornerRadius = 24 // rounded-xl from DESIGN.md
+    //     view.layer.shadowColor = UIColor.black.cgColor
+    //     view.layer.shadowOpacity = 0.1
+    //     view.layer.shadowOffset = CGSize(width: 0, height: 4)
+    //     view.layer.shadowRadius = 12
+    //     view.translatesAutoresizingMaskIntoConstraints = false
+    //     return view
+    // }()
 
-    /// The white check-in-a-circle that sits inside the red square.
+    /// The app icon, loaded straight from `Assets.xcassets`
+    /// (image set name: `TodoistAppIcon`). The artwork already has its
+    /// own red rounded background, so no extra container is needed.
     private let iconImageView: UIImageView = {
-        let config = UIImage.SymbolConfiguration(pointSize: 56, weight: .bold)
-        let image = UIImage(systemName: "checkmark.circle", withConfiguration: config)
-        let imageView = UIImageView(image: image)
-        imageView.tintColor = .white
+        let imageView = UIImageView(image: UIImage(named: "TodoistAppIcon"))
         imageView.contentMode = .scaleAspectFit
+        imageView.layer.shadowColor = UIColor.black.cgColor
+        imageView.layer.shadowOpacity = 0.1
+        imageView.layer.shadowOffset = CGSize(width: 0, height: 4)
+        imageView.layer.shadowRadius = 12
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()
@@ -122,10 +126,11 @@ class SplashViewController: UIViewController {
     }
 
     private func setupLayout() {
-        iconContainer.addSubview(iconImageView)
+        // iconContainer.addSubview(iconImageView)  // no longer wrapped in a red container
         progressTrack.addSubview(progressFill)
 
-        view.addSubview(iconContainer)
+        // view.addSubview(iconContainer)
+        view.addSubview(iconImageView)
         view.addSubview(progressTrack)
         view.addSubview(taglineLabel)
 
@@ -133,19 +138,19 @@ class SplashViewController: UIViewController {
         progressFillWidth = progressFill.widthAnchor.constraint(equalToConstant: 0)
 
         NSLayoutConstraint.activate([
-            /// App icon — perfectly centered
-            iconContainer.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            iconContainer.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            iconContainer.widthAnchor.constraint(equalToConstant: 96),
-            iconContainer.heightAnchor.constraint(equalToConstant: 96),
+            /// App icon — perfectly centered, 96×96
+            // iconContainer.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            // iconContainer.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            // iconContainer.widthAnchor.constraint(equalToConstant: 96),
+            // iconContainer.heightAnchor.constraint(equalToConstant: 96),
 
-            iconImageView.centerXAnchor.constraint(equalTo: iconContainer.centerXAnchor),
-            iconImageView.centerYAnchor.constraint(equalTo: iconContainer.centerYAnchor),
-            iconImageView.widthAnchor.constraint(equalToConstant: 60),
-            iconImageView.heightAnchor.constraint(equalToConstant: 60),
+            iconImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            iconImageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            iconImageView.widthAnchor.constraint(equalToConstant: 96),
+            iconImageView.heightAnchor.constraint(equalToConstant: 96),
 
             /// Progress bar — sits 24pt below the icon (the `lg` spacing token)
-            progressTrack.topAnchor.constraint(equalTo: iconContainer.bottomAnchor, constant: 24),
+            progressTrack.topAnchor.constraint(equalTo: iconImageView.bottomAnchor, constant: 24),
             progressTrack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             progressTrack.widthAnchor.constraint(equalToConstant: 240),
             progressTrack.heightAnchor.constraint(equalToConstant: 4),
